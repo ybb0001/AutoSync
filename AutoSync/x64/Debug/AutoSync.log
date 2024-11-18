@@ -1,0 +1,25 @@
+﻿生成启动时间为 2024/11/16 11:37:24。
+     1>项目“D:\Project\AutoSync\AutoSync\AutoSync.vcxproj”在节点 2 上(Build 个目标)。
+     1>ClCompile:
+         C:\Program Files (x86)\Microsoft Visual Studio 14.0\VC\bin\x86_amd64\CL.exe /c /I.\GeneratedFiles /I. /ID:\Qt\Qt5.7.0\5.7\msvc2015_64\include /I.\GeneratedFiles\Debug /ID:\Qt\Qt5.7.0\5.7\msvc2015_64\include\QtCore /ID:\Qt\Qt5.7.0\5.7\msvc2015_64\include\QtGui /ID:\Qt\Qt5.7.0\5.7\msvc2015_64\include\QtWidgets /Zi /nologo /W1 /WX- /Od /D UNICODE /D WIN32 /D WIN64 /D QT_DLL /D QT_CORE_LIB /D QT_GUI_LIB /D QT_WIDGETS_LIB /D _AFXDLL /Gm- /EHsc /MDd /GS /fp:precise /Zc:wchar_t /Zc:forScope /Zc:inline /Fo"x64\Debug\\" /Fd"x64\Debug\vc140.pdb" /Gd /TP /errorReport:prompt AutoSync.cpp GeneratedFiles\Debug\moc_AutoSync.cpp main.cpp
+         AutoSync.cpp
+         _WIN32_WINNT not defined. Defaulting to _WIN32_WINNT_MAXVER (see WinSDKVer.h)
+         moc_AutoSync.cpp
+         _WIN32_WINNT not defined. Defaulting to _WIN32_WINNT_MAXVER (see WinSDKVer.h)
+         main.cpp
+         _WIN32_WINNT not defined. Defaulting to _WIN32_WINNT_MAXVER (see WinSDKVer.h)
+         正在生成代码...
+         C:\Program Files (x86)\Microsoft Visual Studio 14.0\VC\bin\x86_amd64\CL.exe /c /I.\GeneratedFiles /I. /ID:\Qt\Qt5.7.0\5.7\msvc2015_64\include /I.\GeneratedFiles\Debug /ID:\Qt\Qt5.7.0\5.7\msvc2015_64\include\QtCore /ID:\Qt\Qt5.7.0\5.7\msvc2015_64\include\QtGui /ID:\Qt\Qt5.7.0\5.7\msvc2015_64\include\QtWidgets /Zi /nologo /W1 /WX- /Od /D UNICODE /D WIN32 /D WIN64 /D QT_DLL /D QT_CORE_LIB /D QT_GUI_LIB /D QT_WIDGETS_LIB /D _AFXDLL /Gm- /EHsc /MDd /GS /fp:precise /Zc:wchar_t /Zc:forScope /Zc:inline /Fo"x64\Debug\\" /Fd"x64\Debug\vc140.pdb" /Gd /TP /errorReport:prompt GeneratedFiles\qrc_AutoSync.cpp
+         qrc_AutoSync.cpp
+       Link:
+         C:\Program Files (x86)\Microsoft Visual Studio 14.0\VC\bin\x86_amd64\link.exe /ERRORREPORT:PROMPT /OUT:"D:\Project\AutoSync\x64\Debug\\AutoSync.exe" /NOLOGO /LIBPATH:D:\Qt\Qt5.7.0\5.7\msvc2015_64\lib qtmaind.lib Qt5Cored.lib Qt5Guid.lib Qt5Widgetsd.lib /MANIFEST /MANIFESTUAC:"level='asInvoker' uiAccess='false'" /manifest:embed /manifestinput:"C:\Program Files (x86)\Microsoft Visual Studio 14.0\VC\Include\Manifest\dpiaware.manifest" /Debug /PDB:"D:\Project\AutoSync\x64\Debug\AutoSync.pdb" /SUBSYSTEM:WINDOWS /TLBID:1 /DYNAMICBASE /NXCOMPAT /IMPLIB:"D:\Project\AutoSync\x64\Debug\AutoSync.lib" /MACHINE:X64 x64\Debug\AutoSync.obj
+         x64\Debug\moc_AutoSync.obj
+         x64\Debug\qrc_AutoSync.obj
+         x64\Debug\main.obj
+         x64\Debug\md5.obj
+         AutoSync.vcxproj -> D:\Project\AutoSync\x64\Debug\AutoSync.exe
+     1>已完成生成项目“D:\Project\AutoSync\AutoSync\AutoSync.vcxproj”(Build 个目标)的操作。
+
+已成功生成。
+
+已用时间 00:00:06.57
