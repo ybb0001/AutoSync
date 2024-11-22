@@ -24,14 +24,20 @@ int copy_hour = 0, copy_minute = 0;
 int database_cnt = 0, database_rest =0, root_cnt = 0 ;
 bool ok = true;
 
+//#define mLog_Print_On
+
+#ifdef mLog_Print_On
+ofstream fout("test_log.txt");
+#endif
+
 vector<string> getFiles(string cate_dir)
 {
 	vector<string> files;//存放文件名
 	_finddata_t file;
-	long lf = 0;
-	//输入文件夹路径
+	intptr_t lf = 0;
+
 	if ((lf = _findfirst(cate_dir.c_str(), &file)) == -1) {
-		cout << cate_dir << " not found!!!" << endl;
+		//cout << cate_dir << " not found!!!" << endl;
 	}
 	else {
 		while (_findnext(lf, &file) == 0) {
@@ -43,10 +49,51 @@ vector<string> getFiles(string cate_dir)
 		}
 	}
 	_findclose(lf);
-
-	//排序，按从小到大排序
-	sort(files.begin(), files.end());
+	//sort(files.begin(), files.end());
 	return files;
+}
+
+vector<string> getFilesList_all(string dir)
+{
+	vector<string> allPath;
+	//string dirNew;
+	//dirNew = dir + "\\*.*";
+	intptr_t handle;
+	_finddata_t findData;
+
+	handle = _findfirst(dir.c_str(), &findData);
+	if (handle == -1) {// 检查是否成功
+		cout << "can not found the file ... " << endl;
+		return allPath;
+	}
+
+	do
+	{
+		//if (findData.attrib & _A_SUBDIR) 
+		//{
+
+		//	//若该子目录为"."或".."，则进行下一次循环，否则输出子目录名，并进入下一次搜索
+		//	if (strcmp(findData.name, ".") == 0 || strcmp(findData.name, "..") == 0)
+		//	continue;
+		//	//cout << findData.name << "\t<dir>\n";
+		//	// 在目录后面加上"\\"和搜索到的目录名进行下一次搜索
+		//	dirNew = dir + "\\" = findData.name;
+		//	vector<string> tempPath = getFilesList(dirNew);
+		//	allPath.insert(allPath.end(), tempPath.begin(), tempPath.end());
+
+		//}
+		//else //不是子目录，即是文件，则输出文件名和文件的大小
+		//{
+		if (strcmp(findData.name, ".") == 0 || strcmp(findData.name, "..") == 0)
+			continue;
+		//string filePath = dir + "\\" = findData.name;
+		allPath.push_back(findData.name);
+		//cout << filePath << "\t" << findData.size << " bytes.\n";
+
+		//}
+	} while (_findnext(handle, &findData) == 0);
+	_findclose(handle);    // 关闭搜索句柄
+	return allPath;
 }
 
 void path_Delete(string path) {
@@ -131,7 +178,9 @@ bool capital_samll_check(char a, char b) {
 }
 
 int File_Name_Compare_Root(string file) {
-
+#ifdef mLog_Print_On
+	fout << "Root Compare: " << file << endl;
+#endif
 	int ret = -1;
 	for (int k = 0; k < 32; k++) {
 		if (root_path[k].length()>2) {
@@ -150,6 +199,10 @@ int File_Name_Compare_Root(string file) {
 }
 
 bool File_Name_Compare_MD5(string file) {
+
+#ifdef mLog_Print_On
+	fout << "MD5 Compare: " << file << endl;
+#endif
 
 	for (int k = 0; k < 32; k++) {
 		if (skip_Words_MD5[k].length()>2) {
@@ -234,9 +287,16 @@ int Speical_check(string file) {
 bool AutoSync::path_Check(QString scan_path,int Path_level) {
 
 	string s = scan_path.toStdString();
+#ifdef mLog_Print_On
+	fout << "Scan Path: " << s  << endl;
+#endif
 	vector<string> files1 = getFiles(s + "*");
+#ifdef mLog_Print_On
+	fout << " Files count: " << files1.size() << endl;
+#endif
 	vector<string> ::iterator iVector = files1.begin();
 	int x = 0, ret = 0; bool folder_name = false;
+
 	while (iVector != files1.end())
 	{
 		if (!File_Name_Compare_MD5(*iVector)) {
@@ -303,10 +363,12 @@ bool AutoSync::path_Check(QString scan_path,int Path_level) {
 									PORTCOMNUM = GetPrivateProfileInt(_T("SET_SERIAL_PORT"), TEXT("PORTCOMNUM"), 0, CA2CT(d2.c_str()));
 									PORT_BAUDS = GetPrivateProfileInt(_T("SET_SERIAL_PORT"), TEXT("PORT_BAUDS"), 0, CA2CT(d2.c_str()));
 								}
-								int c_ret = CopyFile(CA2CT(s2.c_str()), CA2CT(d2.c_str()), false);
-								if (!c_ret) {
-									DeleteFile(CA2CT(d2.c_str()));
-									CopyFile(CA2CT(s2.c_str()), CA2CT(d2.c_str()), false);
+								if (m_index == -1||m_index == 9 || m_index == 19) {
+									int c_ret = CopyFile(CA2CT(s2.c_str()), CA2CT(d2.c_str()), false);
+									if (!c_ret) {
+										DeleteFile(CA2CT(d2.c_str()));
+										CopyFile(CA2CT(s2.c_str()), CA2CT(d2.c_str()), false);
+									}
 								}
 								if (m_index == 9 || m_index == 99) {
 									WritePrivateProfileString(TEXT("SET_SERIAL_PORT"), TEXT("PORTCOMNUM"), CA2CT(to_string(PORTCOMNUM).c_str()), CA2CT(d2.c_str()));
@@ -381,6 +443,9 @@ int AutoSync::MD5_check() {
 	int ret = 0;
 	memset(use_Data, 0, sizeof(use_Data));
 	database_rest = database_cnt;
+#ifdef mLog_Print_On
+	fout << "Start path_Check" << endl;
+#endif
 	ret += path_Check("..\\",0);
 	for (int i = 0; i < database_cnt; i++) {
 		if (use_Data[i] != 1) {
@@ -422,6 +487,9 @@ void AutoSync::on_pushButton_Manual_clicked() {
 		log_out("MD5_Setting.ini loading fail!", 1);
 		return;
 	}
+#ifdef mLog_Print_On
+	fout << "MD5_Setting.ini loading pass" << endl;
+#endif
 	ret = MD5_check();
 	if (ret) {
 		log_out("\n MD5 check fail Start to Server Sync Folder",2);
@@ -432,8 +500,6 @@ void AutoSync::on_pushButton_Manual_clicked() {
 		log_out("SW Folder Server Sync fail!", 1);
 		return;
 	}
-
-	log_out("SW Folder Server Sync Done!");
 
 	int nCreateRet = 0;
 	STARTUPINFO si = { sizeof(si) };

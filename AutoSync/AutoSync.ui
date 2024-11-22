@@ -11,7 +11,7 @@
    </rect>
   </property>
   <property name="windowTitle">
-   <string>AutoSync_241118</string>
+   <string>AutoSync_241122</string>
   </property>
   <widget class="QTextEdit" name="from">
    <property name="geometry">
