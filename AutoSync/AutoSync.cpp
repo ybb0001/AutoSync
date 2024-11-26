@@ -1,7 +1,7 @@
 #include "AutoSync.h"
 
 string del_Path_Words[3] = { "temp","log","mes" };
-string src = "", dst = "", src2 = "", dst2 = "", src3 = "", dst3 = "", del_path = "";
+string src[32] = { "" }, dst = "" , del_path = "";
 string Exe_Path[5] = { "","","","","" };
 
 string upper_src = "", upper_src2 = "", upper_src3 = "";
@@ -19,7 +19,7 @@ string pw = "";
 int use_Data[1024] = { 0 };
 bool start = true;
 bool manual = false;
-int mode = 1, exe_cnt = 0;
+int mode = 1, exe_cnt = 0, sIndex = 0;
 int copy_hour = 0, copy_minute = 0;
 int database_cnt = 0, database_rest =0, root_cnt = 0 ;
 bool ok = true;
@@ -53,52 +53,9 @@ vector<string> getFiles(string cate_dir)
 	return files;
 }
 
-vector<string> getFilesList_all(string dir)
-{
-	vector<string> allPath;
-	//string dirNew;
-	//dirNew = dir + "\\*.*";
-	intptr_t handle;
-	_finddata_t findData;
-
-	handle = _findfirst(dir.c_str(), &findData);
-	if (handle == -1) {// 检查是否成功
-		cout << "can not found the file ... " << endl;
-		return allPath;
-	}
-
-	do
-	{
-		//if (findData.attrib & _A_SUBDIR) 
-		//{
-
-		//	//若该子目录为"."或".."，则进行下一次循环，否则输出子目录名，并进入下一次搜索
-		//	if (strcmp(findData.name, ".") == 0 || strcmp(findData.name, "..") == 0)
-		//	continue;
-		//	//cout << findData.name << "\t<dir>\n";
-		//	// 在目录后面加上"\\"和搜索到的目录名进行下一次搜索
-		//	dirNew = dir + "\\" = findData.name;
-		//	vector<string> tempPath = getFilesList(dirNew);
-		//	allPath.insert(allPath.end(), tempPath.begin(), tempPath.end());
-
-		//}
-		//else //不是子目录，即是文件，则输出文件名和文件的大小
-		//{
-		if (strcmp(findData.name, ".") == 0 || strcmp(findData.name, "..") == 0)
-			continue;
-		//string filePath = dir + "\\" = findData.name;
-		allPath.push_back(findData.name);
-		//cout << filePath << "\t" << findData.size << " bytes.\n";
-
-		//}
-	} while (_findnext(handle, &findData) == 0);
-	_findclose(handle);    // 关闭搜索句柄
-	return allPath;
-}
-
 void path_Delete(string path) {
 
-	vector<string> files = getFiles(path + "*");
+	vector<string> files = getFiles(path + "*.*");
 	vector<string> ::iterator iVector = files.begin();
 	while (iVector != files.end())
 	{
@@ -290,7 +247,7 @@ bool AutoSync::path_Check(QString scan_path,int Path_level) {
 #ifdef mLog_Print_On
 	fout << "Scan Path: " << s  << endl;
 #endif
-	vector<string> files1 = getFiles(s + "*");
+	vector<string> files1 = getFiles(s + "*.*");
 #ifdef mLog_Print_On
 	fout << " Files count: " << files1.size() << endl;
 #endif
@@ -307,17 +264,32 @@ bool AutoSync::path_Check(QString scan_path,int Path_level) {
 				if (root_result >= 0) {
 					QString oldPath(s_tail.c_str());
 					QDir dirOld(oldPath);
+					string nPath=s + root_path[root_result];
 					QString newPath((s + root_path[root_result]).c_str());
-					dirOld.rename(oldPath, newPath);
+
+					for (int i = 0; i < 10; i++) {
+						bool dret = dirOld.rename(oldPath, newPath);
+						if (dret) {
+							break;
+						}
+						else {
+							Sleep(1000);
+						}
+					}
+					for (int i = 0; i < 150; i++) {
+						Sleep(100);
+						if (_access(nPath.c_str(), 0)==0) {
+							break;
+						}
+					}
 					ret += path_Check(scan_path, 0);
 					break;
-				}
-			
+				}		
 			}
 			else {
 
 				if (checkPath(s + *iVector) == 1) {
-					string s2 = src + s_tail.substr(3);
+					string s2 = src[sIndex] + s_tail.substr(3);
 					string d2 = dst + s_tail.substr(3);
 					int m_index = Speical_check(*iVector);
 					string m = FileDigest(s_tail);
@@ -447,24 +419,28 @@ int AutoSync::MD5_check() {
 	fout << "Start path_Check" << endl;
 #endif
 	ret += path_Check("..\\",0);
-	for (int i = 0; i < database_cnt; i++) {
-		if (use_Data[i] != 1) {
-			log_out("Lost File:	"+ base_path[i], 1);
-			ret++;
-			string d2 = base_path[i];
-			string s2 = src + d2.substr(3);
-			ret += my_createPath(d2);
-			ret += CopyFile(CA2CT(s2.c_str()), CA2CT(d2.c_str()), false);
-			ui.textBrowser_files->setText(to_string(--database_rest).c_str());
-			repaint();
+	if (ret == 0) {
+		for (int i = 0; i < database_cnt; i++) {
+			if (use_Data[i] != 1) {
+				log_out("Lost File:	" + base_path[i], 1);
+				ret++;
+				string d2 = base_path[i];
+				string s2 = src[sIndex] + d2.substr(3);
+				ret += my_createPath(d2);
+				ret += CopyFile(CA2CT(s2.c_str()), CA2CT(d2.c_str()), false);
+				ui.textBrowser_files->setText(to_string(--database_rest).c_str());
+				repaint();
+			}
 		}
 	}
-
 	return ret;
 }
 
-void AutoSync::on_pushButton_Manual_clicked() {
 
+
+void AutoSync::on_pushButton_Manual_clicked() {
+	ui.pushButton_Manual->setDisabled(true);
+	this->setFixedHeight(100);
 	ui.log->setText("");
 	int ret = 0;
 	string str = QDateTime::currentDateTime().toString("yyyy-MM-dd HH:mm:ss").toStdString();
@@ -485,19 +461,24 @@ void AutoSync::on_pushButton_Manual_clicked() {
 	setting_MD5 = dst + "MD5_Setting.ini";
 	if (get_Setting_MD5(setting_MD5)) {
 		log_out("MD5_Setting.ini loading fail!", 1);
+		ui.pushButton_Manual->setDisabled(false);
 		return;
 	}
 #ifdef mLog_Print_On
 	fout << "MD5_Setting.ini loading pass" << endl;
 #endif
-	ret = MD5_check();
-	if (ret) {
-		log_out("\n MD5 check fail Start to Server Sync Folder",2);
-		ret = MD5_check();	
+	for (int k = 0; k < 3; k++) {
+		ret = MD5_check();
+		if (ret) {
+			log_out("\n MD5 check fail Start to Server Sync Folder", 2);
+		}
+		else break;
 	}
+	ui.pushButton_Manual->setDisabled(false);
 
 	if (ret) {
 		log_out("SW Folder Server Sync fail!", 1);
+		this->setFixedHeight(450);
 		return;
 	}
 
@@ -524,11 +505,11 @@ void AutoSync::on_pushButton_Manual_clicked() {
 				&pi);
 			if (nCreateRet==0) {
 				log_out(Exe_Path[i]+" Run Fail!",1);
+				this->setFixedHeight(450);
 				return;
 			}
 			else {
 				log_out(Exe_Path[i],4);	
-
 			}
 		}
 	}
@@ -562,38 +543,96 @@ void AutoSync::log_out(string src, int type) {
 	}
 	string m_src = src + "\n";
 	ui.log->insertPlainText(m_src.c_str());
+	ui.log->moveCursor(QTextCursor::End);
+}
+
+void  AutoSync::onAlgComboxSelect(int select) {
+	sIndex = select;
+	WritePrivateProfileString(TEXT("Path"), TEXT("fromIndex"), CA2CT(to_string(sIndex).c_str()), TEXT(".\\Setting\\Setting.ini"));
+
+	if (_access(src[sIndex].c_str(), 0)) {
+		QPalette pal;
+		pal = ui.textBrowser_files->palette();
+		pal.setColor(QPalette::Base, QColor(255, 0, 0));//改变背景色 Red
+		ui.textBrowser_files->setPalette(pal);
+	}
+	else {
+		QPalette pal;
+		pal = ui.textBrowser_files->palette();
+		pal.setColor(QPalette::Base, QColor(0, 255, 0));//改变背景色 Green
+		ui.textBrowser_files->setPalette(pal);
+	}
+	ui.from->setText(src[sIndex].c_str());
+	repaint();
+	int len = src[sIndex].length();
+	if(src[sIndex][len-1]!='\\')
+		src[sIndex] += "\\";
+
+	setting2 = src[sIndex] + "copy_set.ini";
+	setting3 = src[sIndex] + "MD5_Setting.ini";
 }
 
 AutoSync::AutoSync(QWidget *parent)
 	: QWidget(parent)
 {
 	ui.setupUi(this);
+	//int lastPath;
+	TCHAR lpTexts[256];
+	
+	for (int k = 0; k < 32; k++) {		
+		string a = "from" + to_string(k);
+		GetPrivateProfileString(TEXT("Path"), CA2CT(a.c_str()), TEXT(""), lpTexts, 255, TEXT(".\\Setting\\Setting.ini"));
+		src[k] = CT2A(lpTexts);
+		//lastPath = getLastPath(src[k]);
+		//upper_src = src[k].substr(0, lastPath);
+	}
 
-	int lastPath;
-	TCHAR lpTexts[200];
-	GetPrivateProfileString(TEXT("Path"), TEXT("from"), TEXT(""), lpTexts, 200, TEXT(".\\Setting\\Setting.ini"));
-	src = CT2A(lpTexts);
-	lastPath = getLastPath(src);
-	upper_src = src.substr(0, lastPath);
+	for (int k = 0; k < 32; k++) {
+		string a = "Item" + to_string(k);
+		GetPrivateProfileString(TEXT("UI_OPTION"), CA2CT(a.c_str()), TEXT(""), lpTexts, 255, TEXT(".\\Setting\\Setting.ini"));
+		string usTxt = "";
+		usTxt = CT2A(lpTexts);
+		if (usTxt.length() > 1) {
+			QString cTxt(usTxt.c_str());
+			ui.comboBox->setItemText(k, cTxt);
+		}
+	}
+
+	sIndex = GetPrivateProfileInt(_T("Path"), TEXT("fromIndex"), 0, TEXT(".\\Setting\\Setting.ini"));
+	ui.comboBox->setCurrentIndex(sIndex);
+
+	if (_access(src[sIndex].c_str(), 0)) {
+		QPalette pal;
+		pal = ui.textBrowser_files->palette();
+		pal.setColor(QPalette::Base, QColor(255, 0, 0));//改变背景色 Red
+		ui.textBrowser_files->setPalette(pal);
+	}
+	else {
+		QPalette pal;
+		pal = ui.textBrowser_files->palette();
+		pal.setColor(QPalette::Base, QColor(0, 255, 0));//改变背景色 Green
+		ui.textBrowser_files->setPalette(pal);
+	}
 
 	//copy_hour = GetPrivateProfileInt(_T("Time"), TEXT("hour"), 0, TEXT(".\\Setting\\Setting.ini"));
 	//copy_minute = GetPrivateProfileInt(_T("Time"), TEXT("minute"), 0, TEXT(".\\Setting\\Setting.ini"));
 
-	ui.from->setText(src.c_str());
-	//ui.to->setText(dst.c_str());
+	ui.from->setText(src[sIndex].c_str());
+	repaint();
 
-	src += "\\";
-	//dst += "\\";
+	src[sIndex] += "\\";
 
-	setting2 = src + "copy_set.ini";
-	setting3 = src + "MD5_Setting.ini";
-
+	setting2 = src[sIndex] + "copy_set.ini";
+	setting3 = src[sIndex] + "MD5_Setting.ini";
 
 	QScreen *screen = qApp->primaryScreen();
 	int nWidth2 = screen->size().width();            //屏幕宽
 	int nHeight2 = screen->size().height();
 
 	this->move(nWidth2 / 2,0 );
+
+	connect(ui.comboBox, SIGNAL(currentIndexChanged(int)), this, SLOT(onAlgComboxSelect(int)));
+
 }
 
 /*
