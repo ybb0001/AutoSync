@@ -313,18 +313,12 @@ bool AutoSync::path_Check(QString scan_path,int Path_level) {
 					bool noUse = true;
 					string usPath = *iVector;
 					int len = usPath.length();
-#if 0
-					if (usPath[len - 1] == 'p'&&usPath[len - 2] == 'i'&&usPath[len - 3] == 'z'&&usPath[len - 4] == '.') {
-						int xxx = 0;
-					}
-#endif
+
 					for (int i = 0; i < database_cnt; i++) {
 						if (use_Data[i] == 0 && strcmp(base_path[i].c_str(), (s + *iVector).c_str()) == 0) {
 							noUse = false;
-							int m_index = Speical_check(*iVector);
-
-							if (strcmp(file_hash[i].c_str(), m.c_str()) != 0 || m_index == 19) {
-								if (m_index == -1) {
+							if (strcmp(file_hash[i].c_str(), m.c_str()) != 0) {
+								if (m_index == -1|| m_index == 9) {
 									ret++;
 									log_out(base_path[i] + ":	" + m, 1);
 								}
@@ -332,19 +326,19 @@ bool AutoSync::path_Check(QString scan_path,int Path_level) {
 								int PORTCOMNUM = 20000;
 								int PORT_BAUDS = 20000;
 								if (m_index == 9 || m_index == 19) {
-									PORTCOMNUM = GetPrivateProfileInt(_T("SET_SERIAL_PORT"), TEXT("PORTCOMNUM"), 0, CA2CT(d2.c_str()));
-									PORT_BAUDS = GetPrivateProfileInt(_T("SET_SERIAL_PORT"), TEXT("PORT_BAUDS"), 0, CA2CT(d2.c_str()));
+	
+									int c_ret = CopyFile(CA2CT(s2.c_str()), CA2CT(current1.c_str()), false);
+									if (!c_ret) {
+										DeleteFile(CA2CT(current1.c_str()));
+										CopyFile(CA2CT(s2.c_str()), CA2CT(current1.c_str()), false);
+									}
 								}
-								if (m_index == -1||m_index == 9 || m_index == 19) {
+								if (m_index == -1) {
 									int c_ret = CopyFile(CA2CT(s2.c_str()), CA2CT(d2.c_str()), false);
 									if (!c_ret) {
 										DeleteFile(CA2CT(d2.c_str()));
 										CopyFile(CA2CT(s2.c_str()), CA2CT(d2.c_str()), false);
 									}
-								}
-								if (m_index == 9 || m_index == 99) {
-									WritePrivateProfileString(TEXT("SET_SERIAL_PORT"), TEXT("PORTCOMNUM"), CA2CT(to_string(PORTCOMNUM).c_str()), CA2CT(d2.c_str()));
-									WritePrivateProfileString(TEXT("SET_SERIAL_PORT"), TEXT("PORT_BAUDS"), CA2CT(to_string(PORT_BAUDS).c_str()), CA2CT(d2.c_str()));
 								}
 							}
 
@@ -435,8 +429,6 @@ int AutoSync::MD5_check() {
 	}
 	return ret;
 }
-
-
 
 void AutoSync::on_pushButton_Manual_clicked() {
 	ui.pushButton_Manual->setDisabled(true);
