@@ -10,10 +10,18 @@ LPCWSTR Lsetting = TEXT("");
 HANDLE myHandle;
 
 string skip_Words_MD5[32] = { "" };
-string special_Path[10] = { "" };
+string special_Path[16] = { "" };
+string keep_Path[16] = { "" };
+string keep_Type[16] = { "" };
+
+int keep_cnt[16] = { 0 };
+string keep_Words[16][256] = { "" };
+string keep_Temp[256] = { "" };
+
 string base_path[8192] = { "" };
 string file_hash[8192] = { "" };
 string root_path[1024] = { "" };
+string empty_path[1024] = { "" };
 
 string pw = "";
 int use_Data[1024] = { 0 };
@@ -21,7 +29,7 @@ bool start = true;
 bool manual = false;
 int mode = 1, exe_cnt = 0, sIndex = 0;
 int copy_hour = 0, copy_minute = 0;
-int database_cnt = 0, database_rest =0, root_cnt = 0 ;
+int database_cnt = 0, database_rest =0, root_cnt = 0, empty_cnt = 0;
 bool ok = true;
 
 //#define mLog_Print_On
@@ -86,19 +94,47 @@ int AutoSync::get_Setting_MD5(string s) {
 		skip_Words_MD5[i] = CT2A(lpTexts);
 	}
 
-	for (int i = 0; i < 9; i++) {
+	for (int i = 0; i < 16; i++) {
 		string t_str = "special_path_" + to_string(i + 1);
 		GetPrivateProfileString(TEXT("Scan_Setting"), CA2CT(t_str.c_str()), TEXT(""), lpTexts, 1024, CA2CT(s.c_str()));
 		special_Path[i] = CT2A(lpTexts);
 	}
-	special_Path[9] = "current.atm";
+	//special_Path[9] = "current.atm";
+
+	for (int i = 0; i < 16; i++) {
+		string t_str = "file_path_" + to_string(i + 1);
+		GetPrivateProfileString(TEXT("Keep_Path"), CA2CT(t_str.c_str()), TEXT(""), lpTexts, 1024, CA2CT(s.c_str()));
+		keep_Path[i] = CT2A(lpTexts);
+	}
+
+	for (int i = 0; i < 16; i++) {
+		if (keep_Path[i].length()>2) {
+			string item_str = "keep_path_" + to_string(i + 1) + "_Type";
+			GetPrivateProfileString(TEXT("Keep_Path"), CA2CT(item_str.c_str()), TEXT(""), lpTexts, 1024, CA2CT(s.c_str()));
+			keep_Type[i] = CT2A(lpTexts);
+			item_str = "keep_path_" + to_string(i + 1) + "_cnt";
+			keep_cnt[i] = GetPrivateProfileInt(_T("Keep_Path"), CA2CT(item_str.c_str()), 0, CA2CT(s.c_str()));
+			for (int j = 0; j < keep_cnt[i]; j++) {
+				string words_str = "keep_path_" + to_string(i + 1) + "_words_"+ to_string(j + 1);
+				GetPrivateProfileString(TEXT("Keep_Path"), CA2CT(words_str.c_str()), TEXT(""), lpTexts, 1024, CA2CT(s.c_str()));
+				keep_Words[i][j] = CT2A(lpTexts);
+			}
+		}
+	}
 
 	root_cnt = GetPrivateProfileInt(_T("Root_Path"), TEXT("Datebase_Size"), 0, CA2CT(s.c_str()));
+	empty_cnt = GetPrivateProfileInt(_T("Empty_Path"), TEXT("Datebase_Size"), 0, CA2CT(s.c_str()));
 
 	for (int i = 0; i < root_cnt; i++) {
 		string t_str = "folder_path" + to_string(i);
 		GetPrivateProfileString(TEXT("Root_Path"), CA2CT(t_str.c_str()), TEXT(""), lpTexts, 1024, CA2CT(s.c_str()));
 		root_path[i] = CT2A(lpTexts);
+	}
+
+	for (int i = 0; i < empty_cnt; i++) {
+		string t_str = "folder_path" + to_string(i);
+		GetPrivateProfileString(TEXT("Empty_Path"), CA2CT(t_str.c_str()), TEXT(""), lpTexts, 1024, CA2CT(s.c_str()));
+		empty_path[i] = CT2A(lpTexts);
 	}
 
 	GetPrivateProfileString(TEXT("Scan_Setting"), TEXT("pw"), TEXT(""), lpTexts, 16, CA2CT(s.c_str()));
@@ -223,7 +259,7 @@ string FileDigest(const string &file) {
 int Speical_check(string file) {
 
 	int ret = -1;
-	for (int k = 0; k < 10; k++) {
+	for (int k = 0; k < 16; k++) {
 		if (special_Path[k].length()>2) {
 			for (int i = 0; i < file.length(); i++) {
 				if (file[i] == special_Path[k][0]) {
@@ -234,6 +270,23 @@ int Speical_check(string file) {
 					if (e == special_Path[k].length()&& e== file.length())
 						return k;
 				}
+				else break;
+			}
+		}
+	}
+
+	for (int k = 0; k < 16; k++) {
+		if (keep_Path[k].length()>2) {
+			for (int i = 0; i < file.length(); i++) {
+				if (file[i] == keep_Path[k][0]) {
+					int e = 0;
+					while (e < keep_Path[k].length() && file[i + e] == keep_Path[k][e]) {
+						e++;
+					}
+					if (e == keep_Path[k].length() && e == file.length())
+						return 100+k;
+				}
+				else break;
 			}
 		}
 	}
@@ -296,14 +349,14 @@ bool AutoSync::path_Check(QString scan_path,int Path_level) {
 					string current1 = s_tail + "1";
 
 					if (m_index != -1) {
-						if (m_index != 9) {
+						if (m_index <100) {
 							if (_access(d2.c_str(), 0)) {
 								CopyFile(CA2CT(s2.c_str()), CA2CT(d2.c_str()), false);
 							}
 						}
 						else {
 							if (_access(current1.c_str(), 0)) {
-								m_index += 10;
+								m_index += 1000;
 								CopyFile(CA2CT(s2.c_str()), CA2CT(current1.c_str()), false);
 							}
 							m = FileDigest(current1);
@@ -318,15 +371,11 @@ bool AutoSync::path_Check(QString scan_path,int Path_level) {
 						if (use_Data[i] == 0 && strcmp(base_path[i].c_str(), (s + *iVector).c_str()) == 0) {
 							noUse = false;
 							if (strcmp(file_hash[i].c_str(), m.c_str()) != 0) {
-								if (m_index == -1|| m_index == 9) {
+								if (m_index == -1|| (m_index >99&& m_index<1000)) {
 									ret++;
 									log_out(base_path[i] + ":	" + m, 1);
 								}
-
-								int PORTCOMNUM = 20000;
-								int PORT_BAUDS = 20000;
-								if (m_index == 9 || m_index == 19) {
-	
+								if (m_index > 99) {
 									int c_ret = CopyFile(CA2CT(s2.c_str()), CA2CT(current1.c_str()), false);
 									if (!c_ret) {
 										DeleteFile(CA2CT(current1.c_str()));
@@ -342,12 +391,24 @@ bool AutoSync::path_Check(QString scan_path,int Path_level) {
 								}
 							}
 
-							if (m_index == 9 || m_index == 19) {
-								int PORTCOMNUM = GetPrivateProfileInt(_T("SET_SERIAL_PORT"), TEXT("PORTCOMNUM"), 0, CA2CT(d2.c_str()));
-								int PORT_BAUDS = GetPrivateProfileInt(_T("SET_SERIAL_PORT"), TEXT("PORT_BAUDS"), 0, CA2CT(d2.c_str()));
+							if (m_index >99) {
+								TCHAR lpTexts[1024];
+								int r_index = m_index % 100;
+								for (int k = 0; k < keep_cnt[r_index]; k++) {								
+									GetPrivateProfileString(CA2CT(keep_Type[r_index].c_str()), CA2CT(keep_Words[r_index][k].c_str()), TEXT(""), lpTexts, 1024, CA2CT(d2.c_str()));
+									keep_Temp[k] = CT2A(lpTexts);
+									//LPWSTR keep_item = GetPrivateProfileInt(_T("SET_SERIAL_PORT"), TEXT("PORTCOMNUM"), 0, CA2CT(d2.c_str()));
+									//LPWSTR keep_item = GetPrivateProfileString(_T("SET_SERIAL_PORT"), TEXT("PORTCOMNUM"), 0, CA2CT(d2.c_str()));
+									//int PORTCOMNUM = GetPrivateProfileInt(_T("SET_SERIAL_PORT"), TEXT("PORTCOMNUM"), 0, CA2CT(d2.c_str()));
+									//int PORT_BAUDS = GetPrivateProfileInt(_T("SET_SERIAL_PORT"), TEXT("PORT_BAUDS"), 0, CA2CT(d2.c_str()));
+									//int c_ret = CopyFile(CA2CT(current1.c_str()), CA2CT(d2.c_str()), false);
+									//WritePrivateProfileString(TEXT("SET_SERIAL_PORT"), TEXT("PORTCOMNUM"), CA2CT(to_string(PORTCOMNUM).c_str()), CA2CT(d2.c_str()));
+									//WritePrivateProfileString(TEXT("SET_SERIAL_PORT"), TEXT("PORT_BAUDS"), CA2CT(to_string(PORT_BAUDS).c_str()), CA2CT(d2.c_str()));
+								}
 								int c_ret = CopyFile(CA2CT(current1.c_str()), CA2CT(d2.c_str()), false);
-								WritePrivateProfileString(TEXT("SET_SERIAL_PORT"), TEXT("PORTCOMNUM"), CA2CT(to_string(PORTCOMNUM).c_str()), CA2CT(d2.c_str()));
-								WritePrivateProfileString(TEXT("SET_SERIAL_PORT"), TEXT("PORT_BAUDS"), CA2CT(to_string(PORT_BAUDS).c_str()), CA2CT(d2.c_str()));
+								for (int k = 0; k < keep_cnt[r_index]; k++) {
+									WritePrivateProfileString(CA2CT(keep_Type[r_index].c_str()), CA2CT(keep_Words[r_index][k].c_str()), CA2CT(keep_Temp[k].c_str()), CA2CT(d2.c_str()));
+								}
 							}
 							use_Data[i] = 1;
 							ui.textBrowser_files->setText(to_string(--database_rest).c_str());
@@ -390,7 +451,7 @@ bool AutoSync::path_Check(QString scan_path,int Path_level) {
 
 int my_createPath(const string file_path) {
 
-	int len = file_path.length()-1;
+	int len = file_path.length();
 	int x=5, ret =0;
 	while (x <len) {
 		if (file_path[x] == '\\') {
@@ -424,6 +485,14 @@ int AutoSync::MD5_check() {
 				ret += CopyFile(CA2CT(s2.c_str()), CA2CT(d2.c_str()), false);
 				ui.textBrowser_files->setText(to_string(--database_rest).c_str());
 				repaint();
+			}
+		}
+
+		for (int i = 0; i < empty_cnt; i++) {
+			if (empty_path[i].length()>2) {
+				if (_access(empty_path[i].c_str(), 0)) {
+					ret += my_createPath(empty_path[i]);
+				}
 			}
 		}
 	}
