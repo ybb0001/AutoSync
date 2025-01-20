@@ -6,19 +6,19 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>450</width>
+    <width>550</width>
     <height>100</height>
    </rect>
   </property>
   <property name="windowTitle">
-   <string>AutoSync_241202</string>
+   <string>AutoSync_250117 by songye.guo</string>
   </property>
   <widget class="QTextEdit" name="from">
    <property name="geometry">
     <rect>
      <x>5</x>
      <y>25</y>
-     <width>370</width>
+     <width>461</width>
      <height>35</height>
     </rect>
    </property>
@@ -46,7 +46,7 @@ p, li { white-space: pre-wrap; }
   <widget class="QPushButton" name="pushButton_Manual">
    <property name="geometry">
     <rect>
-     <x>377</x>
+     <x>470</x>
      <y>30</y>
      <width>71</width>
      <height>31</height>
@@ -62,7 +62,7 @@ p, li { white-space: pre-wrap; }
     <rect>
      <x>5</x>
      <y>65</y>
-     <width>440</width>
+     <width>540</width>
      <height>400</height>
     </rect>
    </property>
@@ -70,7 +70,7 @@ p, li { white-space: pre-wrap; }
   <widget class="QLabel" name="label_2">
    <property name="geometry">
     <rect>
-     <x>285</x>
+     <x>380</x>
      <y>5</y>
      <width>95</width>
      <height>16</height>
@@ -83,7 +83,7 @@ p, li { white-space: pre-wrap; }
   <widget class="QTextBrowser" name="textBrowser_files">
    <property name="geometry">
     <rect>
-     <x>385</x>
+     <x>480</x>
      <y>3</y>
      <width>51</width>
      <height>24</height>

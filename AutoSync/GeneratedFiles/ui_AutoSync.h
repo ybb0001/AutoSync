@@ -38,25 +38,25 @@ public:
     {
         if (AutoSyncClass->objectName().isEmpty())
             AutoSyncClass->setObjectName(QStringLiteral("AutoSyncClass"));
-        AutoSyncClass->resize(450, 100);
+        AutoSyncClass->resize(550, 100);
         from = new QTextEdit(AutoSyncClass);
         from->setObjectName(QStringLiteral("from"));
-        from->setGeometry(QRect(5, 25, 370, 35));
+        from->setGeometry(QRect(5, 25, 461, 35));
         label = new QLabel(AutoSyncClass);
         label->setObjectName(QStringLiteral("label"));
         label->setGeometry(QRect(15, 5, 160, 16));
         pushButton_Manual = new QPushButton(AutoSyncClass);
         pushButton_Manual->setObjectName(QStringLiteral("pushButton_Manual"));
-        pushButton_Manual->setGeometry(QRect(377, 30, 71, 31));
+        pushButton_Manual->setGeometry(QRect(470, 30, 71, 31));
         log = new QTextBrowser(AutoSyncClass);
         log->setObjectName(QStringLiteral("log"));
-        log->setGeometry(QRect(5, 65, 440, 400));
+        log->setGeometry(QRect(5, 65, 540, 400));
         label_2 = new QLabel(AutoSyncClass);
         label_2->setObjectName(QStringLiteral("label_2"));
-        label_2->setGeometry(QRect(285, 5, 95, 16));
+        label_2->setGeometry(QRect(380, 5, 95, 16));
         textBrowser_files = new QTextBrowser(AutoSyncClass);
         textBrowser_files->setObjectName(QStringLiteral("textBrowser_files"));
-        textBrowser_files->setGeometry(QRect(385, 3, 51, 24));
+        textBrowser_files->setGeometry(QRect(480, 3, 51, 24));
         comboBox = new QComboBox(AutoSyncClass);
         comboBox->setObjectName(QStringLiteral("comboBox"));
         comboBox->setGeometry(QRect(190, 1, 80, 23));
@@ -68,7 +68,7 @@ public:
 
     void retranslateUi(QWidget *AutoSyncClass)
     {
-        AutoSyncClass->setWindowTitle(QApplication::translate("AutoSyncClass", "AutoSync_241202", 0));
+        AutoSyncClass->setWindowTitle(QApplication::translate("AutoSyncClass", "AutoSync_250117 by songye.guo", 0));
         from->setHtml(QApplication::translate("AutoSyncClass", "<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.0//EN\" \"http://www.w3.org/TR/REC-html40/strict.dtd\">\n"
 "<html><head><meta name=\"qrichtext\" content=\"1\" /><style type=\"text/css\">\n"
 "p, li { white-space: pre-wrap; }\n"

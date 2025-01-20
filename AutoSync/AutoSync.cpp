@@ -7,7 +7,10 @@ string Exe_Path[5] = { "","","","","" };
 string upper_src = "", upper_src2 = "", upper_src3 = "";
 string setting_copy = "", setting_MD5 = "", setting2 = "", setting3 = "";
 LPCWSTR Lsetting = TEXT("");
+TCHAR mExe_name[256] = TEXT("");
+int mExe_name_len = 0;
 HANDLE myHandle;
+HWND mExe_hWnd = 0;
 
 string skip_Words_MD5[32] = { "" };
 string special_Path[16] = { "" };
@@ -18,8 +21,8 @@ int keep_cnt[16] = { 0 };
 string keep_Words[16][256] = { "" };
 string keep_Temp[256] = { "" };
 
-string base_path[8192] = { "" };
-string file_hash[8192] = { "" };
+string base_path[16384] = { "" };
+string file_hash[16384] = { "" };
 string root_path[1024] = { "" };
 string empty_path[1024] = { "" };
 
@@ -27,16 +30,27 @@ string pw = "";
 int use_Data[1024] = { 0 };
 bool start = true;
 bool manual = false;
-int mode = 1, exe_cnt = 0, sIndex = 0;
+int mode = 1, exe_cnt = 0, sIndex = 0, m_run_exe=0;
 int copy_hour = 0, copy_minute = 0;
 int database_cnt = 0, database_rest =0, root_cnt = 0, empty_cnt = 0;
 bool ok = true;
 
-//#define mLog_Print_On
+#define mLog_Print_On
+
+
 
 #ifdef mLog_Print_On
 ofstream fout("test_log.txt");
 #endif
+
+int getLastPath(string s) {
+
+	int len = s.length() - 1;
+	while (len > 0 && s[len] != '\\') {
+		len--;
+	}
+	return len + 1;
+}
 
 vector<string> getFiles(string cate_dir)
 {
@@ -414,7 +428,8 @@ bool AutoSync::path_Check(QString scan_path,int Path_level) {
 							ui.textBrowser_files->setText(to_string(--database_rest).c_str());
 							repaint();
 
-							if (Path_level % 10 == 1 && files1.size() > 30) {
+							if (Path_level % 10 == 1 && files1.size() > 16) 
+							if(usPath[0] != 'A'||usPath[1] != 'l'||usPath[2] != 'g'||usPath[3] != 'E'||usPath[4] != 'x'){
 								if (usPath[len - 1] == 'e'&&usPath[len - 2] == 'x'&&usPath[len - 3] == 'e'&&usPath[len - 4] == '.') {
 									x++;
 									if (x > 1) {
@@ -499,10 +514,77 @@ int AutoSync::MD5_check() {
 	return ret;
 }
 
+BOOL CALLBACK lpEnumFunc(HWND hwnd, LPARAM lParam)
+{
+	if (GetParent(hwnd) == NULL  &&  IsWindowVisible(hwnd) &&
+		(::GetWindowLong(hwnd, GWL_EXSTYLE)&WS_EX_TOOLWINDOW) != WS_EX_TOOLWINDOW)                            //判断窗口是否是可见、顶层
+	{
+		TCHAR str[256] = { 0 };
+		GetWindowText(hwnd, str, sizeof(str));    
+		//GetClassName(hwnd, str, sizeof(str));
+		//获取窗口的名称
+		CString tempbuf(str);
+		if (!tempbuf.IsEmpty())
+		{
+			bool findit = true;
+			int x = 0;
+
+			while (x < 255 && mExe_name[x] != 0) {
+				if (tempbuf[x] != mExe_name[x]) {
+					findit = false;
+					break;
+				}	
+				x++;
+			}
+
+			if (findit) {
+				mExe_hWnd = hwnd;
+				return 0;
+			}
+		
+#ifdef mLog_Print_On
+			fout << CT2A(tempbuf) << endl;
+#endif
+		}
+	}
+	return 1;
+}
+
+BOOL CALLBACK EnumWindowsProc(HWND hwnd, LPARAM lParam)
+{
+	TCHAR className[256] = { 0 };
+	GetClassName(hwnd, className, sizeof(className));
+	lParam = (LPARAM)hwnd;
+	if (strcmp(CT2A(className), "aaaaaaaa") == 0)
+	{
+		// 找到了窗口，执行相关操作
+		// 可以将hwnd保存到lParam指向的变量中
+		return FALSE; // 返回FALSE以停止枚举
+	}
+	return TRUE; // 继续枚举
+}
+
 void AutoSync::on_pushButton_Manual_clicked() {
 	ui.pushButton_Manual->setDisabled(true);
 	this->setFixedHeight(100);
 	ui.log->setText("");
+
+	if (mExe_name_len > 3) {
+		for (int i = 0; i < 4; i++) {
+			//HWND hWnd = ::FindWindow(NULL, mExe_name); // 注： 这个是窗口的标题文字
+			mExe_hWnd = 0;
+			EnumWindows(lpEnumFunc, (LPARAM)&mExe_hWnd);
+			HWND hWnd = mExe_hWnd;
+			if (NULL != hWnd) {
+				//::SendMessage(hWnd, WM_CLOSE, 0, 0);
+				DWORD id_num;
+				GetWindowThreadProcessId(hWnd, &id_num); //注意：第二个参数是进程的ID，返回值是线程的ID。
+				HANDLE hd = OpenProcess(PROCESS_ALL_ACCESS, FALSE, id_num);
+				TerminateProcess(hd, 0);
+			}
+			else break;
+		}
+	}
 	int ret = 0;
 	string str = QDateTime::currentDateTime().toString("yyyy-MM-dd HH:mm:ss").toStdString();
 	string log_str = "";
@@ -547,44 +629,46 @@ void AutoSync::on_pushButton_Manual_clicked() {
 	STARTUPINFO si = { sizeof(si) };
 	PROCESS_INFORMATION pi;
 	ui.log->setText("");
-	for (int i = 0; i < 5; i++) {
-		if (_access(Exe_Path[i].c_str(), 0)==0) {
-			STARTUPINFO si = { sizeof(si) };
-			PROCESS_INFORMATION pi;
-			si.dwFlags = STARTF_USESHOWWINDOW; // 指定wShowWindow成员有效
-			si.wShowWindow = TRUE; // 此成员设为TRUE的话则显示新建进程的主窗口
-			nCreateRet = CreateProcess(
-				NULL,	// 不在此指定可执行文件的文件名
-				CA2CT(Exe_Path[i].c_str()),// 命令行参数
-				NULL,	// 默认进程安全性
-				NULL,	// 默认进程安全性
-				FALSE,	// 指定当前进程内句柄不可以被子进程继承
-				CREATE_NEW_CONSOLE,	// 为新进程创建一个新的控制台窗口
-				NULL,	// 使用本进程的环境变量
-				NULL,	// 使用本进程的驱动器和目录
-				&si,
-				&pi);
-			if (nCreateRet==0) {
-				log_out(Exe_Path[i]+" Run Fail!",1);
-				this->setFixedHeight(450);
-				return;
-			}
-			else {
-				log_out(Exe_Path[i],4);	
+	if (m_run_exe) {
+		for (int i = 0; i < 5; i++) {
+			if (_access(Exe_Path[i].c_str(), 0) == 0) {
+
+				int m_index = getLastPath(Exe_Path[i]);
+				string m_workPath = Exe_Path[i].substr(0, m_index);
+
+				STARTUPINFO si = { sizeof(si) };
+				PROCESS_INFORMATION pi;
+				si.dwFlags = STARTF_USESHOWWINDOW; // 指定wShowWindow成员有效
+				si.wShowWindow = TRUE; // 此成员设为TRUE的话则显示新建进程的主窗口
+				nCreateRet = CreateProcess(
+					NULL,	// 不在此指定可执行文件的文件名
+					CA2CT(Exe_Path[i].c_str()),// 命令行参数
+					NULL,	// 默认进程安全性
+					NULL,	// 默认进程安全性
+					FALSE,	// 指定当前进程内句柄不可以被子进程继承
+					CREATE_NEW_CONSOLE,	// 为新进程创建一个新的控制台窗口
+					NULL,	// 使用本进程的环境变量
+					CA2CT(m_workPath.c_str()),	// 使用本进程的驱动器和目录
+					&si,
+					&pi);
+				if (nCreateRet == 0) {
+					log_out(Exe_Path[i] + " Run Fail!", 1);
+					this->setFixedHeight(450);
+					return;
+				}
+				else {
+					log_out(Exe_Path[i], 4);
+				}
 			}
 		}
+	}
+	else {
+		log_out("Folder Sync Done\n", 3);
 	}
 	//this->close();
 }
 
-int getLastPath(string s) {
 
-	int len = s.length() - 1;
-	while (len > 0 && s[len] != '\\') {
-		len--;
-	}
-	return len + 1;
-}
 
 void AutoSync::log_out(string src, int type) {
 	if (type == 0) {
@@ -597,7 +681,7 @@ void AutoSync::log_out(string src, int type) {
 		ui.log->setTextColor(QColor(0, 0, 255, 255));
 	}
 	else if (type == 3) {
-		ui.log->setTextColor(QColor(0, 255, 0, 255));
+		ui.log->setTextColor(QColor(0, 200, 0, 255));
 	}
 	else if (type == 4) {
 		ui.log->setTextColor(QColor(255, 0 , 255, 255));
@@ -658,8 +742,15 @@ AutoSync::AutoSync(QWidget *parent)
 			ui.comboBox->setItemText(k, cTxt);
 		}
 	}
-
+	m_run_exe = GetPrivateProfileInt(_T("TEST_OPTION"), TEXT("run_exe"), 1, TEXT(".\\Setting\\Setting.ini"));
 	sIndex = GetPrivateProfileInt(_T("Path"), TEXT("fromIndex"), 0, TEXT(".\\Setting\\Setting.ini"));
+	GetPrivateProfileString(_T("TEST_OPTION"), _T("exe_name"), TEXT(""), mExe_name, 255, TEXT(".\\Setting\\Setting.ini"));
+	int x = 0;
+	while (x < 200) {
+		if (mExe_name[x] != 0)x++;
+		else break;
+	}
+	mExe_name_len = x;
 	ui.comboBox->setCurrentIndex(sIndex);
 
 	if (_access(src[sIndex].c_str(), 0)) {
