@@ -35,7 +35,7 @@ int copy_hour = 0, copy_minute = 0;
 int database_cnt = 0, database_rest =0, root_cnt = 0, empty_cnt = 0;
 bool ok = true;
 
-#define mLog_Print_On
+//#define mLog_Print_On
 
 
 
@@ -86,6 +86,22 @@ void path_Delete(string path) {
 		++iVector;
 	}
 
+}
+
+int my_createPath(const string file_path) {
+
+	int len = file_path.length();
+	int x = 5, ret = 0;
+	while (x <len) {
+		if (file_path[x] == '\\') {
+			string sub_str = file_path.substr(0, x);
+			if (_access(sub_str.c_str(), 0)) {
+				ret += CreateDirectory(CA2CT(sub_str.c_str()), NULL);
+			}
+		}
+		x++;
+	}
+	return ret;
 }
 
 int AutoSync::get_Setting_MD5(string s) {
@@ -213,14 +229,22 @@ bool File_Name_Compare_MD5(string file) {
 
 	for (int k = 0; k < 32; k++) {
 		if (skip_Words_MD5[k].length()>2) {
-			for (int i = 0; i < file.length(); i++) {
-				if (file[i] == skip_Words_MD5[k][0]) {
-					int e = 0;
-					while (e < skip_Words_MD5[k].length() && i + e <file.length() && file[i + e] == skip_Words_MD5[k][e]) {
-						e++;
+			if(skip_Words_MD5[k].length()==4&&skip_Words_MD5[k][0]=='D'&&skip_Words_MD5[k][1] == 'a'&&skip_Words_MD5[k][2] == 't'&&skip_Words_MD5[k][3] == 'a'){
+				if (file.length() >= 4 && file[0] == 'D'&&file[1] == 'a'&&file[2] == 't'&&file[3] == 'a') {					
+					if(file.length()==4) return true;
+					//else return false;
+				}
+			}
+			else {
+				for (int i = 0; i < file.length(); i++) {
+					if (file[i] == skip_Words_MD5[k][0]){
+						int e = 0;
+						while (e < skip_Words_MD5[k].length() && i + e < file.length() && file[i + e] == skip_Words_MD5[k][e]) {
+							e++;
+						}
+						if (e == skip_Words_MD5[k].length())
+							return true;
 					}
-					if (e == skip_Words_MD5[k].length())
-						return true;
 				}
 			}
 		}
@@ -327,7 +351,7 @@ bool AutoSync::path_Check(QString scan_path,int Path_level) {
 			string s_tail = s + *iVector;
 			int root_result = File_Name_Compare_Root(*iVector);
 			if (Path_level == 0 && root_result !=99) {
-				string movePath = "..\\old_SW\\" + *iVector;
+				//string movePath = "..\\old_SW\\" + *iVector;
 				if (root_result >= 0) {
 					QString oldPath(s_tail.c_str());
 					QDir dirOld(oldPath);
@@ -454,7 +478,12 @@ bool AutoSync::path_Check(QString scan_path,int Path_level) {
 				}
 				else {
 					string a = s + (*iVector) + "\\";
-					ret += path_Check(a.c_str(), Path_level + 1);
+					if (strcmp((*iVector).c_str(),"Project")==0&& Path_level==1){
+						ret += path_Check2(a.c_str(), Path_level + 1);
+					}
+					else {
+						ret += path_Check(a.c_str(), Path_level + 1);
+					}
 				}
 			}
 		}
@@ -464,18 +493,44 @@ bool AutoSync::path_Check(QString scan_path,int Path_level) {
 	return ret;
 }
 
-int my_createPath(const string file_path) {
+bool AutoSync::path_Check2(QString scan_path, int Path_level) {
 
-	int len = file_path.length();
-	int x=5, ret =0;
-	while (x <len) {
-		if (file_path[x] == '\\') {
-			string sub_str = file_path.substr(0, x);
-			if (_access(sub_str.c_str(), 0)) {
-				ret+=CreateDirectory(CA2CT(sub_str.c_str()), NULL);
+	string s = scan_path.toStdString();
+	int ret = 0;
+
+	for (int i = 0; i < database_cnt; i++) {
+
+		if (base_path[i].find(s) != std::string::npos) {
+			string s_tail = s + base_path[i];
+			string s2 = src[sIndex] + base_path[i].substr(3);
+			string d2 = dst + base_path[i].substr(3);
+
+			if (_access(d2.c_str(), 0)) {
+				ret = my_createPath(d2);
+				if(ret)my_createPath(d2);
+				CopyFile(CA2CT(s2.c_str()), CA2CT(d2.c_str()), false);
+				if (ret==0)use_Data[i] = 1;
+				ui.textBrowser_files->setText(to_string(--database_rest).c_str());
+			}
+			else {
+				string m = FileDigest(d2);
+				if (use_Data[i] == 0) {
+					if(strcmp(file_hash[i].c_str(), m.c_str()) != 0){
+						log_out(base_path[i] + ":	" + m, 1);
+
+						int c_ret = CopyFile(CA2CT(s2.c_str()), CA2CT(d2.c_str()), false);
+						if (!c_ret) {
+							DeleteFile(CA2CT(d2.c_str()));
+							CopyFile(CA2CT(s2.c_str()), CA2CT(d2.c_str()), false);
+						}		
+
+					}
+					use_Data[i] = 1;
+					ui.textBrowser_files->setText(to_string(--database_rest).c_str());
+					repaint();
+				}
 			}
 		}
-		x++;
 	}
 	return ret;
 }

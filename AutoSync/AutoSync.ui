@@ -11,7 +11,7 @@
    </rect>
   </property>
   <property name="windowTitle">
-   <string>AutoSync_250117 by songye.guo</string>
+   <string>AutoSync_250724 by songye.guo</string>
   </property>
   <widget class="QTextEdit" name="from">
    <property name="geometry">
@@ -95,7 +95,7 @@ p, li { white-space: pre-wrap; }
     <rect>
      <x>190</x>
      <y>1</y>
-     <width>80</width>
+     <width>181</width>
      <height>23</height>
     </rect>
    </property>

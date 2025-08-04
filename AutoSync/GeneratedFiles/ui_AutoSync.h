@@ -59,7 +59,7 @@ public:
         textBrowser_files->setGeometry(QRect(480, 3, 51, 24));
         comboBox = new QComboBox(AutoSyncClass);
         comboBox->setObjectName(QStringLiteral("comboBox"));
-        comboBox->setGeometry(QRect(190, 1, 80, 23));
+        comboBox->setGeometry(QRect(190, 1, 181, 23));
 
         retranslateUi(AutoSyncClass);
 
@@ -68,7 +68,7 @@ public:
 
     void retranslateUi(QWidget *AutoSyncClass)
     {
-        AutoSyncClass->setWindowTitle(QApplication::translate("AutoSyncClass", "AutoSync_250117 by songye.guo", 0));
+        AutoSyncClass->setWindowTitle(QApplication::translate("AutoSyncClass", "AutoSync_250724 by songye.guo", 0));
         from->setHtml(QApplication::translate("AutoSyncClass", "<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.0//EN\" \"http://www.w3.org/TR/REC-html40/strict.dtd\">\n"
 "<html><head><meta name=\"qrichtext\" content=\"1\" /><style type=\"text/css\">\n"
 "p, li { white-space: pre-wrap; }\n"

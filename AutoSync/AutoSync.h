@@ -51,6 +51,7 @@ public:
 	int get_Setting_MD5(string s);
 	int MD5_check();
 	bool path_Check(QString scan_path,int Path_level);
+	bool path_Check2(QString scan_path, int Path_level);
 
 
 private slots :
